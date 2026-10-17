@@ -1,0 +1,315 @@
+/* EduTrack - Modern UI Styling */
+:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #e0e7ff;
+    --secondary-color: #64748b;
+    --success-color: #10b981;
+    --success-light: #d1fae5;
+    --warning-color: #f59e0b;
+    --warning-light: #fef3c7;
+    --danger-color: #ef4444;
+    --danger-light: #fee2e2;
+    --dark-bg: #0f172a;
+    --sidebar-bg: #1e1b4b;
+    --sidebar-hover: #2e287a;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --border-radius: 12px;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%);
+    min-height: 100vh;
+    color: #cbd5e1;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.sidebar .brand {
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar .brand .brand-icon {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+}
+
+.sidebar .nav-item {
+    margin: 4px 12px;
+}
+
+.sidebar .nav-link {
+    color: #94a3b8;
+    padding: 12px 16px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.sidebar .nav-link:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px);
+}
+
+.sidebar .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+.sidebar .nav-link i {
+    font-size: 1.15rem;
+    width: 22px;
+    text-align: center;
+}
+
+.main-content {
+    margin-left: 260px;
+    padding: 24px 32px;
+    min-height: 100vh;
+}
+
+/* Top Navbar */
+.top-navbar {
+    background: #ffffff;
+    border-radius: var(--border-radius);
+    padding: 14px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Cards & Stats */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    background: #ffffff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card {
+    padding: 22px;
+    border-radius: var(--border-radius);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -3px rgba(0,0,0,0.08);
+}
+
+.stat-card .stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.stat-card.primary { border-left: 4px solid #4f46e5; }
+.stat-card.primary .stat-icon { background: #e0e7ff; color: #4f46e5; }
+
+.stat-card.success { border-left: 4px solid #10b981; }
+.stat-card.success .stat-icon { background: #d1fae5; color: #10b981; }
+
+.stat-card.warning { border-left: 4px solid #f59e0b; }
+.stat-card.warning .stat-icon { background: #fef3c7; color: #f59e0b; }
+
+.stat-card.danger { border-left: 4px solid #ef4444; }
+.stat-card.danger .stat-icon { background: #fee2e2; color: #ef4444; }
+
+/* Badges */
+.badge-grade {
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.badge-grade-aplus { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+.badge-grade-a { background: #ecfdf5; color: #047857; }
+.badge-grade-bplus { background: #e0e7ff; color: #3730a3; }
+.badge-grade-b { background: #eff6ff; color: #1d4ed8; }
+.badge-grade-c { background: #fef3c7; color: #92400e; }
+.badge-grade-d { background: #fed7aa; color: #9a3412; }
+.badge-grade-f { background: #fee2e2; color: #991b1b; }
+
+/* Status Badges */
+.status-safe { background: #d1fae5; color: #065f46; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+.status-warning { background: #fef3c7; color: #92400e; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+.status-critical { background: #fee2e2; color: #991b1b; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+
+/* Podium Cards */
+.podium-card {
+    text-align: center;
+    padding: 24px 16px;
+    border-radius: 16px;
+    position: relative;
+    box-shadow: var(--card-shadow);
+}
+
+.podium-card.rank-1 {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 2px solid #fcd34d;
+    transform: scale(1.05);
+}
+
+.podium-card.rank-2 {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px solid #cbd5e1;
+}
+
+.podium-card.rank-3 {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 2px solid #fdba74;
+}
+
+.podium-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+}
+
+.rank-1 .podium-avatar { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
+.rank-2 .podium-avatar { background: linear-gradient(135deg, #94a3b8, #64748b); box-shadow: 0 4px 12px rgba(148, 163, 184, 0.4); }
+.rank-3 .podium-avatar { background: linear-gradient(135deg, #d97706, #b45309); box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4); }
+
+/* Table Styling */
+.table-custom {
+    margin-bottom: 0;
+}
+
+.table-custom thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 14px 16px;
+}
+
+.table-custom tbody td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-custom tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Avatar Pill */
+.student-avatar-pill {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0e7ff;
+    color: #4338ca;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* Attendance Radio Styling */
+.btn-attendance {
+    cursor: pointer;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.btn-check:checked + .btn-outline-present {
+    background-color: #10b981 !important;
+    color: white !important;
+    border-color: #10b981 !important;
+}
+
+.btn-check:checked + .btn-outline-absent {
+    background-color: #ef4444 !important;
+    color: white !important;
+    border-color: #ef4444 !important;
+}
+
+.btn-check:checked + .btn-outline-late {
+    background-color: #f59e0b !important;
+    color: white !important;
+    border-color: #f59e0b !important;
+}
+
+.btn-check:checked + .btn-outline-excused {
+    background-color: #6366f1 !important;
+    color: white !important;
+    border-color: #6366f1 !important;
+}
+
+/* Print Specific Styles */
+@media print {
+    .sidebar, .top-navbar, .no-print, .btn, .alert {
+        display: none !important;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+    .report-card-container {
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+        padding: 24px !important;
+    }
+}

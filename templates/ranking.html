@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Grade Ranking & Academic Leaderboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Grade Ranking & Class Leaderboard</h3>
+        <p class="text-muted mb-0">Merit-based rankings calculated from Cumulative Grade Point Average (CGPA) and aggregate scores.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('export_ranking_csv') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm">
+            <i class="fa-solid fa-file-csv me-1"></i> Export Rankings (CSV)
+        </a>
+    </div>
+</div>
+
+<!-- Podium Display for Top 3 Toppers -->
+{% if top_3 %}
+<div class="row g-4 mb-5 align-items-end justify-content-center">
+    <!-- Rank 2 (Silver) -->
+    {% if top_3|length >= 2 %}
+    <div class="col-md-4 col-sm-6 order-2 order-md-1">
+        <div class="card podium-card rank-2">
+            <span class="badge bg-secondary position-absolute top-0 start-50 translate-middle px-3 py-1 rounded-pill">
+                🥈 Rank #2 Silver
+            </span>
+            <div class="podium-avatar mt-2">{{ top_3[1].name[:2]|upper }}</div>
+            <h5 class="fw-bold mb-1">{{ top_3[1].name }}</h5>
+            <div class="text-muted small mb-2">{{ top_3[1].roll_number }}</div>
+            <div class="h3 fw-bold text-dark mb-0">{{ top_3[1].cgpa }} <small class="fs-6 text-muted">CGPA</small></div>
+            <div class="small text-muted mt-1">Score: <strong>{{ top_3[1].average_marks }}%</strong> • Att: <strong>{{ top_3[1].attendance_pct }}%</strong></div>
+            <a href="{{ url_for('report_card', student_id=top_3[1].student_id) }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-3 rounded-pill w-100">
+                <i class="fa-solid fa-file-lines me-1"></i> View Report Card
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rank 1 (Gold Topper) -->
+    {% if top_3|length >= 1 %}
+    <div class="col-md-4 col-sm-12 order-1 order-md-2">
+        <div class="card podium-card rank-1">
+            <span class="badge bg-warning text-dark fw-bold position-absolute top-0 start-50 translate-middle px-3 py-1 rounded-pill shadow-sm">
+                🥇 Rank #1 Valedictorian (Gold)
+            </span>
+            <div class="podium-avatar mt-3">{{ top_3[0].name[:2]|upper }}</div>
+            <h4 class="fw-bold text-dark mb-1">{{ top_3[0].name }}</h4>
+            <div class="text-muted small mb-2">{{ top_3[0].roll_number }}</div>
+            <div class="h2 fw-bold text-primary mb-0">{{ top_3[0].cgpa }} <small class="fs-6 text-muted">CGPA</small></div>
+            <div class="small text-dark mt-1">Score: <strong>{{ top_3[0].average_marks }}%</strong> • Att: <strong>{{ top_3[0].attendance_pct }}%</strong></div>
+            <a href="{{ url_for('report_card', student_id=top_3[0].student_id) }}" target="_blank" class="btn btn-sm btn-primary mt-3 rounded-pill w-100 shadow-sm">
+                <i class="fa-solid fa-file-lines me-1"></i> View Report Card
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rank 3 (Bronze) -->
+    {% if top_3|length >= 3 %}
+    <div class="col-md-4 col-sm-6 order-3 order-md-3">
+        <div class="card podium-card rank-3">
+            <span class="badge bg-warning-subtle text-warning-emphasis position-absolute top-0 start-50 translate-middle px-3 py-1 rounded-pill">
+                🥉 Rank #3 Bronze
+            </span>
+            <div class="podium-avatar mt-2">{{ top_3[2].name[:2]|upper }}</div>
+            <h5 class="fw-bold mb-1">{{ top_3[2].name }}</h5>
+            <div class="text-muted small mb-2">{{ top_3[2].roll_number }}</div>
+            <div class="h3 fw-bold text-dark mb-0">{{ top_3[2].cgpa }} <small class="fs-6 text-muted">CGPA</small></div>
+            <div class="small text-muted mt-1">Score: <strong>{{ top_3[2].average_marks }}%</strong> • Att: <strong>{{ top_3[2].attendance_pct }}%</strong></div>
+            <a href="{{ url_for('report_card', student_id=top_3[2].student_id) }}" target="_blank" class="btn btn-sm btn-outline-warning mt-3 rounded-pill w-100">
+                <i class="fa-solid fa-file-lines me-1"></i> View Report Card
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Full Class Ranking Table -->
+<div class="card">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h6 class="fw-bold mb-0"><i class="fa-solid fa-ranking-star me-2 text-primary"></i>Official Batch Academic Merit Standing</h6>
+            <small class="text-muted">Class Average CGPA: <strong>{{ class_average_cgpa }} / 10</strong></small>
+        </div>
+        <div style="min-width: 250px;">
+            <input type="text" class="form-control form-control-sm table-search-input" data-table-id="rankingTable" placeholder="Filter ranking list...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom align-middle mb-0" id="rankingTable">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Rank</th>
+                    <th>Student Name</th>
+                    <th>Department</th>
+                    <th>Credits</th>
+                    <th>Aggregate Marks</th>
+                    <th>Average %</th>
+                    <th>CGPA (/10)</th>
+                    <th>Grade</th>
+                    <th>Percentile</th>
+                    <th>Attendance</th>
+                    <th class="text-end">Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rankings %}
+                <tr class="{% if r.rank <= 3 %}bg-light-subtle{% endif %}">
+                    <td>
+                        {% if r.rank == 1 %}
+                            <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="fa-solid fa-medal"></i> #1</span>
+                        {% elif r.rank == 2 %}
+                            <span class="badge bg-secondary text-white fw-bold px-2 py-1"><i class="fa-solid fa-medal"></i> #2</span>
+                        {% elif r.rank == 3 %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis fw-bold px-2 py-1"><i class="fa-solid fa-medal"></i> #3</span>
+                        {% else %}
+                            <span class="fw-bold text-muted ps-2">#{{ r.rank }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="student-avatar-pill">{{ r.name[:2]|upper }}</span>
+                            <div>
+                                <a href="{{ url_for('student_detail', student_id=r.student_id) }}" class="fw-bold text-dark text-decoration-none">
+                                    {{ r.name }}
+                                </a>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ r.roll_number }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ r.department }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ r.total_credits }}</span></td>
+                    <td><span class="fw-semibold">{{ r.aggregate_marks }}</span></td>
+                    <td><strong>{{ r.average_marks }}%</strong></td>
+                    <td>
+                        <span class="fw-bold text-primary fs-6">{{ r.cgpa }}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-grade badge-grade-{{ r.overall_grade|lower|replace('+', 'plus') }}">
+                            {{ r.overall_grade }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-info-subtle text-info fw-semibold">{{ r.percentile }}%</span>
+                    </td>
+                    <td>
+                        <span class="status-{{ r.attendance_class }}">{{ r.attendance_pct }}%</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('report_card', student_id=r.student_id) }}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2" title="Generate Official Report Card">
+                            <i class="fa-solid fa-file-lines me-1"></i> Report
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="11" class="text-center py-5 text-muted">
+                        No ranking data available yet. Please record marks for courses first.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

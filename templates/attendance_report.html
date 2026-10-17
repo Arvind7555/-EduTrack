@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Percentage Report{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Attendance Percentage & Eligibility</h3>
+        <p class="text-muted mb-0">Monitor student attendance ratios and detect eligibility compliance (75% threshold).</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('export_attendance_csv', course_id=selected_course_id) }}" class="btn btn-outline-success btn-sm px-3">
+            <i class="fa-solid fa-file-csv me-1"></i> Export to CSV
+        </a>
+        <a href="{{ url_for('attendance', course_id=selected_course_id) }}" class="btn btn-primary btn-sm px-3">
+            <i class="fa-solid fa-plus me-1"></i> Mark Today's Attendance
+        </a>
+    </div>
+</div>
+
+<!-- Threshold Stat Counters -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Eligible / Safe (&ge; 75%)</span>
+                    <h2 class="fw-bold text-success mb-0 mt-1">{{ safe_count }}</h2>
+                    <small class="text-success fw-medium">Permitted for semester exams</small>
+                </div>
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Warning (65% - 74.9%)</span>
+                    <h2 class="fw-bold text-warning mb-0 mt-1">{{ warning_count }}</h2>
+                    <small class="text-warning fw-medium">Needs improvement</small>
+                </div>
+                <div class="stat-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card stat-card danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Critical Shortage (&lt; 65%)</span>
+                    <h2 class="fw-bold text-danger mb-0 mt-1">{{ critical_count }}</h2>
+                    <small class="text-danger fw-medium">De-bar / Disqualification Risk</small>
+                </div>
+                <div class="stat-icon">
+                    <i class="fa-solid fa-ban"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Selector & Search Filter -->
+<div class="card p-3 mb-4">
+    <div class="row g-2 align-items-center">
+        <div class="col-md-6">
+            <form method="GET" action="{{ url_for('attendance_report') }}">
+                <div class="input-group">
+                    <label class="input-group-text bg-light fw-semibold text-muted">Filter By Course</label>
+                    <select name="course_id" class="form-select bg-light" onchange="this.form.submit()">
+                        <option value="">Aggregate (All Courses Combined)</option>
+                        {% for c in courses %}
+                        <option value="{{ c.id }}" {% if selected_course_id == c.id %}selected{% endif %}>
+                            {{ c.course_code }} - {{ c.course_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" class="form-control bg-light border-start-0 table-search-input" data-table-id="attendanceReportTable" placeholder="Search student by roll no or name...">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Matrix Table -->
+<div class="card">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0">
+            {% if selected_course %}
+                <span class="badge bg-primary me-2">{{ selected_course.course_code }}</span> {{ selected_course.course_name }} — Attendance Roster
+            {% else %}
+                <i class="fa-solid fa-layer-group text-primary me-2"></i> All Enrolled Students Attendance Ledger
+            {% endif %}
+        </h6>
+        <span class="badge bg-light text-muted border">{{ summary|length }} Students</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom align-middle mb-0" id="attendanceReportTable">
+            <thead>
+                <tr>
+                    <th>Roll No</th>
+                    <th>Student Name</th>
+                    <th>Classes Held</th>
+                    <th>Attended</th>
+                    <th>Present</th>
+                    <th>Late</th>
+                    <th>Absent</th>
+                    <th style="width: 240px;">Percentage</th>
+                    <th>Status</th>
+                    <th class="text-end">Profile</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in summary %}
+                <tr>
+                    <td><span class="fw-bold text-primary">{{ s.roll_number }}</span></td>
+                    <td>
+                        <a href="{{ url_for('student_detail', student_id=s.student_id) }}" class="fw-semibold text-dark text-decoration-none">
+                            {{ s.name }}
+                        </a>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ s.department }} (Sem {{ s.semester }})</div>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ s.total_classes }}</span></td>
+                    <td><span class="fw-bold">{{ s.attended_weighted }}</span></td>
+                    <td><span class="text-success fw-semibold">{{ s.present_count }}</span></td>
+                    <td><span class="text-warning fw-semibold">{{ s.late_count }}</span></td>
+                    <td><span class="text-danger fw-semibold">{{ s.absent_count }}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 10px;">
+                                <div class="progress-bar {% if s.percentage >= 75 %}bg-success{% elif s.percentage >= 65 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ s.percentage }}%;"></div>
+                            </div>
+                            <span class="fw-bold small" style="min-width: 45px;">{{ s.percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-{{ s.status_class }}">{{ s.status }}</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('student_detail', student_id=s.student_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2">
+                            <i class="fa-regular fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-5 text-muted">
+                        No student attendance records recorded yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Students Directory{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1">Students Management</h3>
+        <p class="text-muted mb-0">Enroll, manage, and monitor all registered students.</p>
+    </div>
+    <div>
+        <button type="button" class="btn btn-primary px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+            <i class="fa-solid fa-user-plus me-1"></i> Add New Student
+        </button>
+    </div>
+</div>
+
+<!-- Search & Filter Card -->
+<div class="card p-3 mb-4">
+    <form method="GET" action="{{ url_for('students') }}" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" class="form-control bg-light border-start-0 table-search-input" data-table-id="studentsTable" name="search" value="{{ search }}" placeholder="Search by name, roll number, email...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="department" class="form-select bg-light" onchange="this.form.submit()">
+                <option value="">All Departments</option>
+                <option value="Computer Science" {% if selected_dept == 'Computer Science' %}selected{% endif %}>Computer Science</option>
+                <option value="Information Technology" {% if selected_dept == 'Information Technology' %}selected{% endif %}>Information Technology</option>
+                <option value="Electronics" {% if selected_dept == 'Electronics' %}selected{% endif %}>Electronics</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="semester" class="form-select bg-light" onchange="this.form.submit()">
+                <option value="">All Semesters</option>
+                {% for sem in range(1, 9) %}
+                <option value="{{ sem }}" {% if selected_sem == sem|string %}selected{% endif %}>Semester {{ sem }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('students') }}" class="btn btn-outline-secondary w-100">
+                <i class="fa-solid fa-rotate-left me-1"></i> Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Students Data Table -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-custom align-middle mb-0" id="studentsTable">
+            <thead>
+                <tr>
+                    <th>Roll No</th>
+                    <th>Student Name</th>
+                    <th>Department</th>
+                    <th>Semester</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td>
+                        <span class="fw-bold text-primary">{{ s.roll_number }}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="student-avatar-pill">{{ s.first_name[:1] }}{{ s.last_name[:1] }}</span>
+                            <div>
+                                <a href="{{ url_for('student_detail', student_id=s.id) }}" class="fw-semibold text-dark text-decoration-none">
+                                    {{ s.first_name }} {{ s.last_name }}
+                                </a>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ s.gender }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ s.department }}</td>
+                    <td><span class="badge bg-light text-dark border">Sem {{ s.semester }}</span></td>
+                    <td>
+                        <div><i class="fa-regular fa-envelope text-muted me-1"></i> <small>{{ s.email }}</small></div>
+                        {% if s.phone %}
+                        <div><i class="fa-solid fa-phone text-muted me-1"></i> <small>{{ s.phone }}</small></div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if s.status == 'Active' %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %}">
+                            {{ s.status }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('student_detail', student_id=s.id) }}" class="btn btn-outline-primary" title="View Profile & Academic Record">
+                                <i class="fa-regular fa-eye"></i> Profile
+                            </a>
+                            <a href="{{ url_for('report_card', student_id=s.id) }}" class="btn btn-outline-secondary" title="View Report Card" target="_blank">
+                                <i class="fa-solid fa-file-lines"></i>
+                            </a>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteStudentModal{{ s.id }}" title="Delete">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </div>
+
+                        <!-- Delete Confirmation Modal -->
+                        <div class="modal fade text-start" id="deleteStudentModal{{ s.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header border-0 pb-0">
+                                        <h5 class="modal-title text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Delete Student?</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Are you sure you want to delete student <strong>{{ s.first_name }} {{ s.last_name }} ({{ s.roll_number }})</strong>?
+                                        <div class="text-muted small mt-2">All associated attendance records, enrollments, and marks will also be permanently deleted.</div>
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                        <form method="POST" action="{{ url_for('delete_student', student_id=s.id) }}">
+                                            <button type="submit" class="btn btn-danger btn-sm">Yes, Delete Student</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-user-slash fs-2 mb-2 d-block"></i>
+                        No students found matching your criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_student') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus text-primary me-2"></i>Add New Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Roll Number <span class="text-danger">*</span></label>
+                            <input type="text" name="roll_number" class="form-control" placeholder="e.g. CS2024-015" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Gender</label>
+                            <select name="gender" class="form-select">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                            <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" placeholder="student@college.edu" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone Number</label>
+                            <input type="text" name="phone" class="form-control" placeholder="e.g. 9876543210">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Department</label>
+                            <input type="text" name="department" class="form-control" value="Computer Science" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Semester</label>
+                            <select name="semester" class="form-select">
+                                {% for s in range(1, 9) %}
+                                <option value="{{ s }}" {% if s == 3 %}selected{% endif %}>Semester {{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Enroll in Initial Courses</label>
+                            <div class="row g-2">
+                                {% for c in courses %}
+                                <div class="col-md-6">
+                                    <div class="form-check p-2 border rounded bg-light">
+                                        <input class="form-check-input ms-1" type="checkbox" name="course_ids" value="{{ c.id }}" id="course_{{ c.id }}" checked>
+                                        <label class="form-check-label ms-2" for="course_{{ c.id }}">
+                                            <strong>{{ c.course_code }}</strong>: {{ c.course_name }} ({{ c.credits }} credits)
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Register Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

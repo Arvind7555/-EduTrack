@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Executive Dashboard</h3>
+        <p class="text-muted mb-0">Overview of student attendance statistics, academic marks, and performance ranking.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('attendance') }}" class="btn btn-outline-primary btn-sm px-3">
+            <i class="fa-solid fa-clipboard-check me-1"></i> Take Attendance
+        </a>
+        <a href="{{ url_for('marks') }}" class="btn btn-outline-success btn-sm px-3">
+            <i class="fa-solid fa-file-pen me-1"></i> Record Marks
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total Students</span>
+                    <h2 class="fw-bold mb-0 mt-1">{{ stats.total_students }}</h2>
+                    <small class="text-primary fw-medium"><a href="{{ url_for('students') }}" class="text-decoration-none">View directory &rarr;</a></small>
+                </div>
+                <div class="stat-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Active Courses</span>
+                    <h2 class="fw-bold mb-0 mt-1">{{ stats.total_courses }}</h2>
+                    <small class="text-success fw-medium"><a href="{{ url_for('courses') }}" class="text-decoration-none">Manage subjects &rarr;</a></small>
+                </div>
+                <div class="stat-icon">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card {% if stats.avg_attendance_pct >= 75 %}success{% elif stats.avg_attendance_pct >= 65 %}warning{% else %}danger{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Avg Attendance</span>
+                    <h2 class="fw-bold mb-0 mt-1">{{ stats.avg_attendance_pct }}%</h2>
+                    <small class="{% if stats.avg_attendance_pct >= 75 %}text-success{% else %}text-danger{% endif %} fw-medium">
+                        <i class="fa-solid fa-shield-halved"></i> 75% Min Criteria
+                    </small>
+                </div>
+                <div class="stat-icon">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Class Avg Marks</span>
+                    <h2 class="fw-bold mb-0 mt-1">{{ stats.class_avg_marks }} / 100</h2>
+                    <small class="text-warning fw-medium"><a href="{{ url_for('ranking') }}" class="text-decoration-none">View ranking sheet &rarr;</a></small>
+                </div>
+                <div class="stat-icon">
+                    <i class="fa-solid fa-star-half-stroke"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Attendance Alert Notification -->
+{% if stats.low_attendance_students %}
+<div class="alert alert-warning border-start border-warning border-4 shadow-sm mb-4 d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-3">
+        <div class="bg-warning text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+            <h6 class="mb-0 fw-bold">Attendance Eligibility Alert!</h6>
+            <small class="text-muted">
+                {{ stats.low_attendance_students|length }} student(s) have fallen below the mandatory <strong>75% attendance threshold</strong>.
+            </small>
+        </div>
+    </div>
+    <a href="{{ url_for('attendance_report') }}" class="btn btn-warning btn-sm px-3 fw-medium">
+        Review At-Risk Students &rarr;
+    </a>
+</div>
+{% endif %}
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Grade Distribution Doughnut Chart -->
+    <div class="col-lg-5">
+        <div class="card p-3 h-100">
+            <div class="card-header bg-transparent border-0 pb-0 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Grade Distribution</h6>
+                <span class="badge bg-light text-muted">All Courses</span>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="gradeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Average Scores Bar Chart -->
+    <div class="col-lg-7">
+        <div class="card p-3 h-100">
+            <div class="card-header bg-transparent border-0 pb-0 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="fa-solid fa-chart-column me-2 text-primary"></i>Course-Wise Average Marks</h6>
+                <span class="badge bg-light text-muted">Performance</span>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="coursePerformanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Rankers & At Risk Table -->
+<div class="row g-4">
+    <!-- Top 5 Rankers -->
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
+                <h6 class="fw-bold mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i>Class Leaderboard (Top Rankers)</h6>
+                <a href="{{ url_for('ranking') }}" class="btn btn-sm btn-link text-decoration-none">Full Ranking &rarr;</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom align-middle">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student</th>
+                            <th>CGPA</th>
+                            <th>Avg Marks</th>
+                            <th>Attendance</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ranker in stats.top_rankers %}
+                        <tr>
+                            <td>
+                                {% if ranker.rank == 1 %}
+                                    <span class="badge bg-warning text-dark"><i class="fa-solid fa-medal"></i> #1</span>
+                                {% elif ranker.rank == 2 %}
+                                    <span class="badge bg-secondary text-white"><i class="fa-solid fa-medal"></i> #2</span>
+                                {% elif ranker.rank == 3 %}
+                                    <span class="badge bg-dark-subtle text-dark"><i class="fa-solid fa-medal"></i> #3</span>
+                                {% else %}
+                                    <span class="badge bg-light text-muted">#{{ ranker.rank }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="student-avatar-pill">{{ ranker.name[:2]|upper }}</span>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ ranker.name }}</div>
+                                        <small class="text-muted">{{ ranker.roll_number }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-primary">{{ ranker.cgpa }}</span>
+                                <small class="text-muted">/10</small>
+                            </td>
+                            <td>{{ ranker.average_marks }}%</td>
+                            <td>
+                                <span class="status-{{ ranker.attendance_class }}">{{ ranker.attendance_pct }}%</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('student_detail', student_id=ranker.student_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" title="View Profile">
+                                    <i class="fa-regular fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No ranking records available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- At-Risk Attendance Students -->
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
+                <h6 class="fw-bold mb-0 text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Attendance Watchlist (< 75%)</h6>
+                <span class="badge bg-danger-subtle text-danger">{{ stats.low_attendance_students|length }} Flagged</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom align-middle">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Classes</th>
+                            <th>Percentage</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in stats.low_attendance_students %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ s.name }}</div>
+                                <small class="text-muted">{{ s.roll_number }}</small>
+                            </td>
+                            <td>{{ s.attended_weighted }} / {{ s.total_classes }}</td>
+                            <td>
+                                <div class="fw-bold text-danger">{{ s.percentage }}%</div>
+                            </td>
+                            <td>
+                                <span class="status-{{ s.status_class }}">{{ s.status }}</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                <i class="fa-solid fa-circle-check text-success fs-4 d-block mb-2"></i>
+                                Great job! All students are above 75% attendance.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // 1. Grade Distribution Chart
+    const gradeLabels = {{ stats.grade_distribution.keys()|list|tojson }};
+    const gradeCounts = {{ stats.grade_distribution.values()|list|tojson }};
+
+    const ctxGrade = document.getElementById('gradeChart').getContext('2d');
+    new Chart(ctxGrade, {
+        type: 'doughnut',
+        data: {
+            labels: gradeLabels,
+            datasets: [{
+                data: gradeCounts,
+                backgroundColor: [
+                    '#10b981', // A+ Emerald
+                    '#34d399', // A Light Green
+                    '#6366f1', // B+ Indigo
+                    '#3b82f6', // B Blue
+                    '#f59e0b', // C Amber
+                    '#fb923c', // D Orange
+                    '#ef4444'  // F Red
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 12 } }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+
+    // 2. Course Performance Chart
+    const courseCodes = {{ stats.course_performance|map(attribute='course_code')|list|tojson }};
+    const courseScores = {{ stats.course_performance|map(attribute='avg_score')|list|tojson }};
+
+    const ctxCourse = document.getElementById('coursePerformanceChart').getContext('2d');
+    new Chart(ctxCourse, {
+        type: 'bar',
+        data: {
+            labels: courseCodes,
+            datasets: [{
+                label: 'Average Score (%)',
+                data: courseScores,
+                backgroundColor: '#6366f1',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { font: { family: 'Plus Jakarta Sans' } }
+                },
+                x: {
+                    ticks: { font: { family: 'Plus Jakarta Sans' } }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}
